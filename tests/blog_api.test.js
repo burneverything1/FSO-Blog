@@ -1,30 +1,17 @@
 const mongoose = require('mongoose')
 const supertest = require('supertest')
+const helper = require('./test_helper')
 const app = require('../app')           // import express application from app.js and wrap it in supertest
 
 const api = supertest(app)
 
 const Blog = require('../models/blog')
-const initialBlogs = [
-    {
-        title: 'Go To Statement Considered Harmful',
-        author: 'Edsger W. Dijkstra',
-        url: 'http://www.u.arizona.edu/~rubinson/copyright_violations/Go_To_Considered_Harmful.html',
-        likes: 5,
-    },
-    {
-        title: 'test',
-        author: 'testauthor',
-        url: 'http://www.test.com',
-        likes: 3,
-    }
-]
 
 beforeEach(async () => {
     await Blog.deleteMany({})
-    let blogObject = new Blog(initialBlogs[0])
+    let blogObject = new Blog(helper.initialBlogs[0])
     await blogObject.save()
-    blogObject = new Blog(initialBlogs[1])
+    blogObject = new Blog(helper.initialBlogs[1])
     await blogObject.save()
 })
 
@@ -38,7 +25,7 @@ test('blogs are returned as json', async () => {
 test('there are two blogs', async () => {
     const response = await api.get('/api/blogs')
 
-    expect(response.body).toHaveLength(2)
+    expect(response.body).toHaveLength(helper.initialBlogs.length)
 })
 
 test('the first blog is about harmful statements', async () => {
@@ -61,13 +48,59 @@ test('blog post is added correctly', async () => {
         .expect(200)
         .expect('Content-Type', /application\/json/)
 
-    const response = await api.get('/api/blogs')
-    expect(response.body).toHaveLength(initialBlogs.length + 1)
+    const blogsAtEnd = await helper.blogsInDb()
+    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length + 1)
 
-    const titles = response.body.map(n => n.title)
+    const titles = blogsAtEnd.map(n => n.title)
     expect(titles).toContain(
         'testpost'
     )
+})
+
+describe('deletion of a blog', () => {
+    test('204 upon successful deletion', async () => {
+        const blogsAtStart = await helper.blogsInDb()
+        const blogToDelete = blogsAtStart[0]
+
+        await api
+            .delete(`/api/blogs/${blogToDelete.id}`)
+            .expect(204)
+
+        // check that there is one less blog
+        const blogsAtEnd = await helper.blogsInDb()
+
+        expect(blogsAtEnd).toHaveLength(
+            helper.initialBlogs.length - 1
+        )
+
+        const titles = blogsAtEnd.map(r => r.title)
+
+        expect(titles).not.toContain(blogToDelete.title)
+    })
+})
+
+describe('updating of a blog', () => {
+    test('title successfully changes', async () => {
+        const blogsAtStart = await helper.blogsInDb()
+        let blogToUpdate = blogsAtStart[0]
+
+        const updates = {
+            title: 'updatetest'
+        }
+        blogToUpdate = Object.assign(blogToUpdate, updates)
+
+        await api
+            .put(`/api/blogs/${blogToUpdate.id}`)
+            .send(blogToUpdate)
+            .expect(200)
+            .expect('Content-Type', /application\/json/)
+
+        const blogsAtEnd = await helper.blogsInDb()
+        const titles = blogsAtEnd.map(n => n.title)
+
+        expect(titles).toContain(blogToUpdate.title)
+
+    })
 })
 
 afterAll(() => {
