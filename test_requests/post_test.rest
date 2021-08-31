@@ -5,5 +5,6 @@ Content-Type: application/json
     "title": "title",
     "author": "author",
     "url": "www.blogtest.com",
-    "likes": "3"
+    "likes": "3",
+    "userId": "612e58f321e7e1af33b4bb08"
 }
