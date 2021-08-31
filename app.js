@@ -3,7 +3,7 @@ const express = require('express')
 const app = express()
 const cors = require('cors')
 
-const blogsRouter = require('./controllers/blogsRouter')
+const blogsRouter = require('./controllers/blogs')
 const usersRouter = require('./controllers/users')
 
 const middleware = require('./utils/middleware')
