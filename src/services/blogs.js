@@ -1,4 +1,4 @@
-import axios from 'axios'
+import axios from '../utils/axios_config'
 const baseUrl = '/api/blogs'
 
 const getAll = () => {
