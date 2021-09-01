@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import Blog from './components/Blog'
+import Notification from './components/Notification'
 import blogService from './services/blogs'
 import loginService from './services/login'
 
@@ -8,6 +9,7 @@ const App = () => {
   const [newBlogTitle, setNewBlogTitle] = useState('')
   const [newBlogAuthor, setNewBlogAuthor] = useState('')
   const [newBlogUrl, setNewBlogUrl] = useState('')
+  const [notifMessage, setNotifMessage] = useState(null)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [user, setUser] = useState(null)
@@ -27,6 +29,13 @@ const App = () => {
     }
   }, [])
 
+  const notifyUser = (message) => {
+    setNotifMessage(message)
+    setTimeout(() => {
+      setNotifMessage(null)
+    }, 3000)
+  }
+
   const addBlog = (event) => {
     event.preventDefault()
     const blogObject = {
@@ -41,6 +50,7 @@ const App = () => {
       .create(blogObject)
       .then(returnedBlog => {
         setBlogs(blogs.concat(returnedBlog))
+        notifyUser(`blog ${newBlogTitle} successfully created`)
         setNewBlogTitle('')
         setNewBlogAuthor('')
         setNewBlogUrl('')
@@ -64,7 +74,7 @@ const App = () => {
       setUsername('')
       setPassword('')
     } catch (exception) {
-      console.log(exception);
+      notifyUser('wrong credentials')
     }
   }
 
@@ -135,6 +145,8 @@ const App = () => {
   if (user === null) {    // conditional app if user isn't logged in
     return (
       <div>
+        <Notification message={notifMessage} />
+
         <h2>log in to application</h2>
         {loginForm()}
     </div>
@@ -143,6 +155,8 @@ const App = () => {
 
   return (
     <div>
+      <Notification message={notifMessage} />
+
       <h2>blogs</h2>
       <p>{user.name} logged-in
         <button onClick={handleLogout}>logout</button>
