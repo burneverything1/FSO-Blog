@@ -1,16 +1,15 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import Blog from './components/Blog'
 import Notification from './components/Notification'
 import LoginForm from './components/LoginForm'
+import Togglable from './components/Togglable'
+import BlogForm from './components/BlogForm'
 
 import blogService from './services/blogs'
 import loginService from './services/login'
 
 const App = () => {
   const [blogs, setBlogs] = useState([])
-  const [newBlogTitle, setNewBlogTitle] = useState('')
-  const [newBlogAuthor, setNewBlogAuthor] = useState('')
-  const [newBlogUrl, setNewBlogUrl] = useState('')
   const [notifMessage, setNotifMessage] = useState(null)
   const [user, setUser] = useState(null)
 
@@ -36,24 +35,14 @@ const App = () => {
     }, 3000)
   }
 
-  const addBlog = (event) => {
-    event.preventDefault()
-    const blogObject = {
-      title: newBlogTitle,
-      author: newBlogAuthor,
-      url: newBlogUrl,
-      likes: 0,
-      userId: user.id
-    }
-
+  const createBlog = (blogObject) => {
+    blogFormRef.current.toggleVisibility()
     blogService
       .create(blogObject)
       .then(returnedBlog => {
         setBlogs(blogs.concat(returnedBlog))
-        notifyUser(`blog ${newBlogTitle} successfully created`)
-        setNewBlogTitle('')
-        setNewBlogAuthor('')
-        setNewBlogUrl('')
+        notifyUser(`blog ${returnedBlog.title} successfully created`)
+
       })
   }
 
@@ -82,38 +71,13 @@ const App = () => {
   const loginForm = () => (
     <LoginForm handleLogin={handleLogin}/>
   )
+  
+  const blogFormRef = useRef()
 
   const blogForm = () => (
-    <form onSubmit={addBlog}>
-      <div>
-        title:
-          <input
-          type='text'
-          value={newBlogTitle}
-          name='Title'
-          onChange={({ target }) => setNewBlogTitle(target.value)}
-          />
-      </div>
-      <div>
-        author:
-          <input
-          type='text'
-          value={newBlogAuthor}
-          name='Author'
-          onChange={({ target }) => setNewBlogAuthor(target.value)}
-          />
-      </div>
-      <div>
-        url:
-          <input
-          type='text'
-          value={newBlogUrl}
-          name='Url'
-          onChange={({ target }) => setNewBlogUrl(target.value)}
-          />
-      </div>
-      <button type='submit'>create</button>
-    </form>
+    <Togglable buttonLabel='create new blog' ref={blogFormRef}>
+      <BlogForm createBlog={createBlog} user={user} />
+    </Togglable>
   )
 
   if (user === null) {    // conditional app if user isn't logged in
